@@ -1,0 +1,67 @@
+name: Tests
+
+# Hourly (and on demand) the formulae are bumped to the latest release of their repo.
+# Every run builds and tests the formulae on macOS; a bump is only committed when that passes.
+on:
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tap
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    runs-on: macos-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HOMEBREW_NO_INSTALL_FROM_API: 1
+      HOMEBREW_NO_AUTO_UPDATE: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bump formulae
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        id: bump
+        run: |
+          scripts/bump.sh tussh baeroe/tussh | tee bump.log
+          if git diff --quiet; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Skip unchanged scheduled run
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "${{ steps.bump.outputs.changed }}" != "true" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Shellcheck
+        if: steps.gate.outputs.run == 'true'
+        run: brew install shellcheck && shellcheck scripts/*.sh
+
+      - name: Build, test and audit
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          brew tap baeroe/tap "$GITHUB_WORKSPACE"
+          for f in Formula/*.rb; do
+            name="$(basename "$f" .rb)"
+            brew install --build-from-source "baeroe/tap/${name}"
+            brew test "baeroe/tap/${name}"
+            brew audit --strict "baeroe/tap/${name}"
+          done
+
+      - name: Commit bump
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "$(cat bump.log | sed 's/^/tussh: /')"
+          git push
