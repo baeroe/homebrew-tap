@@ -31,7 +31,11 @@ jobs:
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         id: bump
         run: |
-          scripts/bump.sh tussh baeroe/tussh | tee bump.log
+          : > bump.log
+          for f in Formula/*.rb; do
+            name="$(basename "$f" .rb)"
+            scripts/bump.sh "$name" "baeroe/$name" | sed "s/^/${name}: /" | tee -a bump.log
+          done
           if git diff --quiet; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
 
       - name: Skip unchanged scheduled run
@@ -63,5 +67,5 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "$(cat bump.log | sed 's/^/tussh: /')"
+          git commit -am "$(grep ': updated' bump.log)"
           git push
