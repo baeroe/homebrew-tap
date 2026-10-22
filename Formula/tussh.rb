@@ -1,8 +1,8 @@
 class Tussh < Formula
   desc "SSH connection manager TUI with access control for AI agents"
   homepage "https://github.com/baeroe/tussh"
-  url "https://github.com/baeroe/tussh/archive/refs/tags/v0.1.0.tar.gz"
-  sha256 "63305870d4916607ba65c007610a80de9f6261e1bd3f0ea20d73af47829b3912"
+  url "https://github.com/baeroe/tussh/archive/refs/tags/v0.2.0.tar.gz"
+  sha256 "023a38f73c64b6c60100a1506e212edf721a095993f4deaa6dd032dbb7d385da"
   license "MIT"
   head "https://github.com/baeroe/tussh.git", branch: "main"
 
