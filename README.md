@@ -10,6 +10,7 @@ brew install baeroe/tap/<formula>
 |---|---|
 | [`tussh`](https://github.com/baeroe/tussh) | SSH connection manager TUI with access control for AI agents |
 | [`lazy1mcp`](https://github.com/baeroe/lazy1mcp) | Terminal UI to see and manage the MCP servers of a 1MCP instance |
+| [`skilltri`](https://github.com/baeroe/skilltri) | MCP gateway and agent skill manager with per-folder rules for AI agent harnesses |
 
 Formulae build from the tagged source release, so there are no unsigned binaries for Gatekeeper to block.
 
